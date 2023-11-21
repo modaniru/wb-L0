@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+
 	"io"
 	"log"
 	"net/http"
@@ -45,4 +46,22 @@ func (s *Server) GetOrder(w http.ResponseWriter, r *http.Request){
 	var buf bytes.Buffer
 	json.Indent(&buf, data, "", "\t")
 	w.Write(buf.Bytes())
+}
+
+func (s *Server) GetForm(w http.ResponseWriter, r *http.Request){
+	uid := r.URL.Query().Get("uid")
+	if uid == "" {
+		s.template.Execute(w, nil)
+		return
+	}
+	data, err := s.storage.GetByUid(r.Context(), uid)
+	if err != nil{
+		s.template.Execute(w, map[string]any{
+			"error": err.Error(),
+		})
+		return
+	}
+	s.template.Execute(w, map[string]any{
+		"order": string(data),
+	})
 }
