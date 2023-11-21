@@ -10,6 +10,7 @@ import (
 
 var(
 	NotFoundOrderError = errors.New("no found order")
+	OrderAlreadyInCache = errors.New("order already in cache, so skip")
 )
 
 type OrderStorage struct{
@@ -24,21 +25,28 @@ func NewOrderStorage(db *sql.DB, cache *Cache) *OrderStorage{
 }
 
 func (o *OrderStorage) SaveOrder(ctx context.Context, orderId string, order []byte) error{
-	query := "insert into orders (order_uid, order_json) values ($1, $2);"
+	if _, ok := o.cache.Get(orderId); ok {
+		return OrderAlreadyInCache
+	}
+	query := "insert into orders (order_uid, order_json) values ($1, $2) returning order_json;"
 	stmt, err := o.db.Prepare(query)
 	if err != nil{
 		return fmt.Errorf("prepare sql error: %w", err)
 	}
-	_, err = stmt.Exec(orderId, order)
+	row := stmt.QueryRow(orderId, order)
+	
+	res := []byte{}
+	err = row.Scan(&res)
 	if err != nil{
-		return fmt.Errorf("exec sql error: %w", err)
+		return fmt.Errorf("scan query error: %w", err)
 	}
+	o.cache.Put(orderId, res)
 	return nil
 }
 
 func (o *OrderStorage) GetByUid(ctx context.Context, orderId string) ([]byte, error){
-	res := o.cache.Get(orderId)
-	if res == nil{
+	res, ok := o.cache.Get(orderId)
+	if !ok{
 		return nil, NotFoundOrderError
 	}
 	return res, nil

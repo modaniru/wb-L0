@@ -16,7 +16,8 @@ func NewServer(storage *storage.OrderStorage) *Server{
 
 func (s *Server) InitRouter() *chi.Mux{
 	router := chi.NewRouter()
-	router.Post("/", s.SaveOrder)
-	router.Get("/{uid}", s.GetOrder)
+	r := router.With(s.Test)
+	r.Post("/", s.SaveOrder)
+	r.Get("/{uid}", s.GetOrder)
 	return router
 }

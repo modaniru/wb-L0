@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"log"
@@ -41,6 +42,7 @@ func (s *Server) GetOrder(w http.ResponseWriter, r *http.Request){
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-
-	w.Write(data)
+	var buf bytes.Buffer
+	json.Indent(&buf, data, "", "\t")
+	w.Write(buf.Bytes())
 }
