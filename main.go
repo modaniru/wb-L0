@@ -13,7 +13,7 @@ import (
 func main(){
 	conn, _ := stan.Connect("prod", "producer")
 
-	i := 300
+	i := 1000
 	for true{
 		err := conn.Publish("test", []byte(fmt.Sprintf(
 `{

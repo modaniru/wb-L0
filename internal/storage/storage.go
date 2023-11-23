@@ -15,10 +15,10 @@ var(
 
 type OrderStorage struct{
 	db *sql.DB
-	cache *Cache
+	cache CacheI
 }
 
-func NewOrderStorage(db *sql.DB, cache *Cache) *OrderStorage{
+func NewOrderStorage(db *sql.DB, cache CacheI) *OrderStorage{
 	storage := &OrderStorage{db: db, cache: cache}
 	storage.fillCache()
 	return storage
@@ -58,6 +58,7 @@ func (o *OrderStorage) fillCache(){
 	if err != nil{
 		log.Fatal(fmt.Errorf("prepare sql error: %w", err).Error())
 	}
+
 	rows, err := stmt.Query()
 	if err != nil{
 		log.Fatal(fmt.Errorf("exec sql query error: %w", err).Error())
@@ -75,3 +76,4 @@ func (o *OrderStorage) fillCache(){
 		o.cache.Put(key, data)
 	}
 }
+

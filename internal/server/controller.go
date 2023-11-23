@@ -7,9 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"wb-l0/internal/entity"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/modaniru/wb-L0/internal/entity"
 )
 
 func (s *Server) SaveOrder(w http.ResponseWriter, r *http.Request){
@@ -37,7 +36,7 @@ func (s *Server) SaveOrder(w http.ResponseWriter, r *http.Request){
 }
 
 func (s *Server) GetOrder(w http.ResponseWriter, r *http.Request){
-	uid := chi.URLParam(r, "uid")
+	uid := r.URL.Query().Get("uid")
 	data, err := s.storage.GetByUid(r.Context(), uid)
 	if err != nil{
 		http.Error(w, err.Error(), http.StatusNotFound)

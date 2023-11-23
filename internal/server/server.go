@@ -2,9 +2,9 @@ package server
 
 import (
 	"html/template"
-	"wb-l0/internal/storage"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/modaniru/wb-L0/internal/storage"
 )
 
 type Server struct{
@@ -23,7 +23,7 @@ func (s *Server) InitRouter() *chi.Mux{
 	r := router.With(s.Test)
 	r.Post("/", s.SaveOrder)
 	r.Get("/form", s.GetForm)
-	r.Get("/order/{uid}", s.GetOrder)
+	r.Get("/order", s.GetOrder)
 	return router
 }
 

@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"wb-l0/internal/entity"
-	"wb-l0/internal/storage"
 
 	log "log/slog"
 
+	"github.com/modaniru/wb-L0/internal/entity"
+	"github.com/modaniru/wb-L0/internal/storage"
 	"github.com/nats-io/stan.go"
 )
 
@@ -33,11 +33,13 @@ func (s *Subscriber) GetMsgHandler() stan.MsgHandler{
 		if err != nil{
 			if errors.Is(err, storage.OrderAlreadyInCache){
 				log.Warn(err.Error())
+				msg.Ack()
 				return
 			}
 			log.Error(err.Error())
 			return
 		}
 		log.Info("order saved")
+		msg.Ack()
 	}
 }
