@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//todo Mock cache
-func TestCraeteStorageAndFillCache(t *testing.T){
+// todo Mock cache
+func TestCraeteStorageAndFillCache(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	if err != nil{
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -26,10 +26,9 @@ func TestCraeteStorageAndFillCache(t *testing.T){
 	_ = NewOrderStorage(db, NewInmemoryCache())
 }
 
-
-func TestSaveOrder(t *testing.T){
+func TestSaveOrder(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	if err != nil{
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -50,15 +49,15 @@ func TestSaveOrder(t *testing.T){
 	storage := NewOrderStorage(db, NewInmemoryCache())
 	err = storage.SaveOrder(context.Background(), uid, data)
 	assert.NoError(t, err)
-	
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
-func TestSaveOrderAlredyInCacheError(t *testing.T){
+func TestSaveOrderAlredyInCacheError(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	if err != nil{
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -78,9 +77,9 @@ func TestSaveOrderAlredyInCacheError(t *testing.T){
 	}
 }
 
-func TestGetById(t *testing.T){
+func TestGetById(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	if err != nil{
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -102,9 +101,9 @@ func TestGetById(t *testing.T){
 	assert.Equal(t, data, actual)
 }
 
-func TestGetByIdNotFound(t *testing.T){
+func TestGetByIdNotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	if err != nil{
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -116,11 +115,39 @@ func TestGetByIdNotFound(t *testing.T){
 		WillReturnRows(sqlmock.NewRows([]string{"order_id", "order_json"}).AddRow(uid, data))
 
 	storage := NewOrderStorage(db, NewInmemoryCache())
+	actual, err := storage.GetByUid(context.Background(), "2")
+
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-
-	actual, err := storage.GetByUid(context.Background(), "2")
 	assert.Error(t, err)
 	assert.Nil(t, actual)
+}
+
+func TestGetRowsCount(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	uid := "1"
+	data := []byte("test")
+
+	//when NewOrderStorage
+	mock.ExpectPrepare("select order_uid, order_json from orders;")
+	mock.ExpectQuery("select order_uid, order_json from orders;").
+		WillReturnRows(sqlmock.NewRows([]string{"order_id", "order_json"}).AddRow(uid, data))
+	//when
+	mock.ExpectPrepare(regexp.QuoteMeta("select count(*) as count from orders;"))
+	mock.ExpectQuery(regexp.QuoteMeta("select count(*) as count from orders;")).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	storage := NewOrderStorage(db, NewInmemoryCache())
+	rw, err := storage.GetRowsCount(context.Background())
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+	assert.NoError(t, err)
+	assert.Equal(t, 1, rw.Cache)
+	assert.Equal(t, 1, rw.DB)
 }

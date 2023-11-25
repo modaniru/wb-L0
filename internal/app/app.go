@@ -10,52 +10,52 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/lib/pq"
 	natssub "github.com/modaniru/wb-L0/internal/nats-sub"
 	"github.com/modaniru/wb-L0/internal/server"
 	"github.com/modaniru/wb-L0/internal/storage"
 	"github.com/nats-io/stan.go"
 )
 
-func App(){
+func App() {
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5555?sslmode=disable")
-	if err != nil{
+	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 
 	err = db.PingContext(context.Background())
-	if err != nil{
+	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
-	
+
 	orderStorage := storage.NewOrderStorage(db, storage.NewInmemoryCache())
 	server := server.NewServer(orderStorage)
 	router := server.InitRouter()
 
 	subscriber := natssub.NewSubscriber(orderStorage)
-	
+
 	conn, err := stan.Connect("prod", "subscriber")
-	if err != nil{
+	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 
 	defer conn.Close()
 
-	sub, err := conn.Subscribe("test", subscriber.GetMsgHandler(), stan.DurableName("test-client"))
-	if err != nil{
+	_, err = conn.Subscribe("test", subscriber.GetMsgHandler(), stan.DurableName("client"))
+	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 
-	defer sub.Unsubscribe()
 	httpServer := http.Server{
-		Addr: ":80",
+		Addr:    ":80",
 		Handler: router,
 	}
-	go func ()  {
-		if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed){
+	go func() {
+		if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			slog.Error(err.Error())
 			os.Exit(1)
 		}
@@ -64,18 +64,18 @@ func App(){
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
-	<- signalChan
+	<-signalChan
 
 	shutdown := context.Background()
 
-	if err := httpServer.Shutdown(shutdown); err != nil{
+	if err := httpServer.Shutdown(shutdown); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 	slog.Info("finished")
 }
 
-func initLogger(){
+func initLogger() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
 	slog.Info("slog was init...")
