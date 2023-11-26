@@ -48,30 +48,30 @@ func (s *Server) GetOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) GetForm(w http.ResponseWriter, r *http.Request) {
+	model := map[string]any{}
 	uid := r.URL.Query().Get("uid")
-	if uid == "" {
-		s.template.Execute(w, nil)
+
+	rc, err := s.storage.GetRowsCount(r.Context())
+	if err != nil{
+		model["error"] = err.Error()
+		s.template.Execute(w, model)
 		return
 	}
+
+	model["cache"] = rc.Cache
+	model["db"] = rc.DB
+	if uid == "" {
+		s.template.Execute(w, model)
+		return
+	}
+
 	data, err := s.storage.GetByUid(r.Context(), uid)
 	if err != nil {
-		s.template.Execute(w, map[string]any{
-			"error": err.Error(),
-		})
+		model["error"] = err.Error()
+		s.template.Execute(w, model)
 		return
 	}
 
-	// rc, err := s.storage.GetRowsCount(r.Context())
-	// if err != nil{
-	// 	s.template.Execute(w, map[string]any{
-	// 		"error": err.Error(),
-	// 	})
-	// 	return
-	// }
-
-	s.template.Execute(w, map[string]any{
-		"order": string(data),
-		"cache": 0,
-		"db": 0,
-	})
+	model["order"] = string(data)
+	s.template.Execute(w, model)
 }

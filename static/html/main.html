@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WB-L0 Заказы</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="body">
+        <div class="wrapper">
+            <form action="/form" class="form">
+                <input type="text" name="uid" id="uid">
+                <input type="submit" value="Отправить">
+            </form>
+            <span class="info">
+                В cache: {{ .cache }}, в бд: {{ .db }}
+            </span>
+            {{ if .order }}
+            <pre id="json">{{ .order }}</pre>
+            {{ end }}
+            {{ if .error }}
+            <p class="error">{{ .error }}</p>
+            {{ end }}
+        </div>
+    </div>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

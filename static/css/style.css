@@ -1,0 +1,26 @@
+
+*{
+    margin: 0px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.info{
+    font-weight: bold;
+    font-style: italic;
+}
+.error{
+    color: rgb(239, 88, 88);
+}
+.body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.form{
+    width: fit-content;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+.wrapper{
+    width: 50%;
+}
