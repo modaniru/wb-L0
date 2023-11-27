@@ -19,6 +19,13 @@ type OrderStorage struct {
 }
 
 func NewOrderStorage(db *sql.DB, cache CacheI) *OrderStorage {
+	_, err := db.Exec(`create table if not exists orders (
+		order_uid varchar primary key,
+		order_json JSONB
+	);`)
+	if err != nil{
+		log.Fatal(err.Error())
+	}
 	storage := &OrderStorage{db: db, cache: cache}
 	storage.fillCache()
 	return storage
